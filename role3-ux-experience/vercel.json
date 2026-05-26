@@ -1,0 +1,6 @@
+{
+  "functions": {},
+  "rewrites": [{ "source": "/(.*)", "destination": "/$1" }],
+  "outputDirectory": ".next",
+  "framework": "nextjs"
+}
