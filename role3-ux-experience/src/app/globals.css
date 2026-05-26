@@ -8,8 +8,6 @@
   }
 
   body {
-    background-color: theme('colors.bg-dark');
-    color: #e2e8f0;
     font-family: "DM Sans", "Inter", system-ui, sans-serif;
   }
 

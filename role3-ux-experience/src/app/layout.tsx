@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
-import Header  from "@/components/Header";
-import AddTopicModal from "@/components/AddTopicModal";
 import ReactQueryProvider from "@/components/ReactQueryProvider";
+import LayoutClient from "./LayoutClient";
 
 export const metadata: Metadata = {
   title:       "StudySync",
@@ -25,17 +23,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="flex h-screen overflow-hidden bg-slate-950 text-slate-100">
-        <Sidebar />
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <Header />
-          <ReactQueryProvider>
-            <main className="flex-1 overflow-y-auto">
-              {children}
-            </main>
-          </ReactQueryProvider>
-        </div>
-        <AddTopicModal />
+      <body>
+        <ReactQueryProvider>
+          <LayoutClient>{children}</LayoutClient>
+        </ReactQueryProvider>
       </body>
     </html>
   );

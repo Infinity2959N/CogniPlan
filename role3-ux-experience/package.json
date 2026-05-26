@@ -20,6 +20,7 @@
     "postcss": "^8.4.49",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "socket.io-client": "^4.8.3",
     "zustand": "^4.5.7"
   },
   "devDependencies": {

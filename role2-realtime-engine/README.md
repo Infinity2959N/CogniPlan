@@ -1,164 +1,58 @@
-# CogniPlan Role 2: Real-Time Engine
+# ⚡ CogniPlan Role 2: Real-Time Sockets & WebRTC Engine
 
-This folder contains the real-time synchronization backend service for CogniPlan. It is built with Node.js, Express, Socket.io, and the 100ms server SDK. The engine enables live room state management, whiteboard collaboration, user presence tracking, and video token provisioning.
+This folder contains the real-time collaboration gateway service for **CogniPlan**. It is built on Node.js, Express, and Socket.io, providing drawing packet broadcasts, synchronized study timers, presence lists, and **direct peer-to-peer WebRTC video signaling**.
 
-## Overview
+---
 
-The real-time engine supports:
+## 🛠 Features
 
-- Room creation and join flow using Socket.io rooms
-- User presence and active user list synchronization
-- Whiteboard stroke broadcasting and canvas clearing
-- Video token generation through 100ms server SDK
-- Environment configuration via `.env`
+- **P2P WebRTC Signaling Gateway**: Bridges SDP offers, SDP answers, and ICE candidates between clients via the `webrtc_signal` socket event. This provides zero-cost peer-to-peer audio and video calls directly between students without external keys, credit cards, or SaaS SDK dependencies.
+- **Real-Time Collaborative Whiteboard**: Broadcasts stroke drawings and clears canvas pages instantly. Stores a local `canvas_history` cache in memory to sync drawings for late-joining students.
+- **Real-Time Shared Pomodoro Timer**: Runs room-wide countdown timers inside a synchronized background ticking thread, responding to `toggle_timer` and `reset_timer` socket inputs.
+- **Roster & User presence**: Tracks active usernames and client connection IDs to push live list updates when users join or disconnect.
 
-## Folder Contents
+---
 
-### `package.json`
+## 📂 Key Files & Events
 
-Defines the project dependencies and scripts:
+### 1. `server.js` (Server Gateway Core)
+Initializes Socket.io and Express. Listens for the following events:
+- `join_room`: Joins a Room ID, registers the username, returns the current drawing history + active user list, and updates room peers.
+- `draw_stroke`: Receives drawing strokes, saves them to in-memory history, and broadcasts them.
+- `clear_canvas`: Wipes drawings in a room.
+- `webrtc_signal`: Bridges P2P calls by piping WebRTC signaling data (`type: offer`, `answer`, or `ice-candidate`) directly to a target socket ID.
+- `toggle_timer`: Toggles room-wide study ticking.
+- `reset_timer`: Resets Pomodoro intervals.
 
-- `express`: Web server framework
-- `socket.io`: Real-time WebSocket communication
-- `socket.io-client`: Client library for connecting to Socket.io servers
-- `cors`: Cross-origin middleware for browser clients
-- `dotenv`: Loads environment variables from `.env`
-- `@100mslive/server-sdk`: 100ms server SDK for video token generation
-- `nodemon`: Dev dependency for automatic server restarts
+### 2. `utils.js` (Throttler Helpers)
+Contains standard rate-limiting helpers like `throttle(func, delay)` to compress frequent draw/movement broadcasts over WebSockets.
 
-Scripts:
+---
 
-- `start`: Runs `node server.js`
-- `dev`: Runs `nodemon server.js`
+## ⚙️ Environment Settings (`.env`)
 
-### `server.js`
+Configure the engine's network settings:
+```env
+PORT=3001
+CLIENT_URL=http://localhost:3000
+```
 
-The main backend server file. This is the core of the real-time engine.
+---
 
-Responsibilities:
+## 🚀 Local Run Quickstart
 
-- Load environment variables with `dotenv`
-- Create an Express app and enable CORS
-- Set up an HTTP server and Socket.io server
-- Initialize 100ms SDK using `HMS_ACCESS_KEY` and `HMS_SECRET_KEY`
-- Handle incoming socket connections and room events
-
-Socket event handling:
-
-1. `join_room`
-   - Adds a socket to a room
-   - Creates room state if it does not exist
-   - Tracks active users and sends the current room state back to the joining user
-   - Broadcasts updated user list to others in the same room
-
-2. `draw_stroke`
-   - Receives drawing stroke data from a client
-   - Stores stroke in `rooms[roomId].canvas_history`
-   - Broadcasts the new stroke to other users in the room
-
-3. `clear_canvas`
-   - Clears the room's canvas history
-   - Broadcasts `canvas_cleared` to all users in the room
-
-4. `request_video_token`
-   - Uses the 100ms SDK to generate a management token for video or room access
-   - Emits `video_token_received` with the generated token
-   - Sends `video_error` if token generation fails
-
-5. `disconnect`
-   - Removes the disconnected socket from all room active user lists
-   - Broadcasts updated user lists to remaining room members
-
-Server config:
-
-- Default port: `3001` if `PORT` is not provided
-- CORS origin is currently set to `http://localhost:3000`
-
-### `utils.js`
-
-Contains shared helper utilities for the engine.
-
-Current exports:
-
-- `throttle(func, delay)`:
-  - Limits how often a function may execute
-  - Useful for reducing frequent broadcast or draw updates to avoid too much traffic
-  - Returns a wrapper that only runs `func` once per `delay` milliseconds
-
-Note: This helper is currently implemented but not yet imported or used in `server.js`.
-
-### `.env.example`
-
-Provides the required environment variables for the server:
-
-- `HMS_ACCESS_KEY`: 100ms API access key
-- `HMS_SECRET_KEY`: 100ms API secret key
-
-Copy `.env.example` to `.env` and replace the placeholder values with valid 100ms credentials before running the server.
-
-### `.gitignore`
-
-Ignored files and folders for this node service, typically including:
-
-- `node_modules/`
-- `.env`
-- `npm-debug.log`
-- `dist/` or build artifacts if present
-
-### `.env`
-
-Local environment variable overrides. Should contain secrets and is not committed to source control.
-
-## How it works together
-
-1. A client connects to the Socket.io server in `server.js`.
-2. The client sends `join_room` with `roomId` and `username`.
-3. The server creates or restores room state in the `rooms` object.
-4. The server sends the room state to the joining client and notifies other clients.
-5. Drawing events are synchronized across clients using `draw_stroke` and `receive_stroke`.
-6. The canvas is cleared for all clients using `clear_canvas`.
-7. Video access is enabled by requesting a token from the 100ms server SDK.
-
-## Running the service
-
-1. Install dependencies:
-
-```powershell
-cd "c:\Users\Muneef Khan\Desktop\New folder (2)\CogniPlan\role2-realtime-engine"
+1. **Install Socket dependencies**:
+```bash
 npm install
 ```
 
-2. Create `.env` from `.env.example`:
-
-```powershell
-copy .env.example .env
+2. **Run Sockets Engine**:
+```bash
+npm start
 ```
+*WebRTC Signaling and Shared Sockets will begin on `http://localhost:3001`.*
 
-3. Start the server:
-
-```powershell
-npm run start
-```
-
-4. For development with auto-reload:
-
-```powershell
+3. **Development Mode with auto-reloads**:
+```bash
 npm run dev
 ```
-
-## Notes
-
-- The engine currently stores room state in memory only, so it is not persistent across restarts.
-- The current CORS setting is limited to `http://localhost:3000`; update this if the client runs from a different origin.
-- If you want to use `utils.throttle`, import it in `server.js` and apply it to event handlers like `draw_stroke`.
-
-## File Roles Summary
-
-- `package.json`: Dependency and script configuration
-- `server.js`: Real-time API, room management, socket event handling, 100ms video token generation
-- `utils.js`: Helper utilities for throttling and later reuse
-- `.env.example`: Example environment variable file for 100ms credentials
-- `.gitignore`: Ignored local files and folders for Git
-- `.env`: Local environment variables (not committed)
-- `README.md`: This documentation file
-- `selfnotes.md`: Developer notes summarizing progress and next tasks

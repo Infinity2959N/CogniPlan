@@ -4,17 +4,36 @@
   "description": "Role 1 backend logic and scheduling engine",
   "main": "dist/index.js",
   "scripts": {
+    "dev": "ts-node src/week3/server.ts",
+    "start": "node dist/src/week3/server.js",
     "build": "tsc -p tsconfig.json",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "@prisma/client": "^6.5.0",
+    "zod": "^3.24.2"
+  },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^4.17.21",
     "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/supertest": "^6.0.3",
     "jest": "^29.7.0",
+    "prisma": "^6.5.0",
+    "supertest": "^7.0.0",
+    "ts-node": "^10.9.2",
     "ts-jest": "^29.2.5",
     "typescript": "^5.7.3"
   }

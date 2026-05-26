@@ -10,6 +10,7 @@ export interface Topic {
   easeFactor: number;
   repetitions: number;
   interval: number;
+  isGroup?: boolean;
 }
 
 export interface Subject {
@@ -40,6 +41,7 @@ export interface TopicCardProps {
   status: TopicStatus;
   lastReviewed: Date;
   onReview: (score: number) => void;
+  isGroup?: boolean;
 }
 
 export interface BadgeProps {

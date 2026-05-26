@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Urgency {
+  low
+  medium
+  high
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
+  name         String
+  passwordHash String     @map("password_hash")
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  subjects  Subject[]
+  studyLogs StudyLog[]
+
+  @@map("users")
+}
+
+model Subject {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  name         String
+  syllabusCode String?  @map("syllabus_code")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topics Topic[]
+
+  @@map("subjects")
+}
+
+model Topic {
+  id         String    @id @default(uuid()) @db.Uuid
+  subjectId  String    @map("subject_id") @db.Uuid
+  title      String
+  urgency    Urgency   @default(medium)
+  isArchived Boolean   @default(false) @map("is_archived")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  subject   Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  studyLogs StudyLog[]
+
+  @@index([subjectId])
+  @@map("topics")
+}
+
+model StudyLog {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  topicId           String    @map("topic_id") @db.Uuid
+  lastReviewed      DateTime? @map("last_reviewed") @db.Timestamptz(6)
+  nextReview        DateTime  @map("next_review") @db.Timestamptz(6)
+  easeFactor        Float     @default(2.5) @map("ease_factor")
+  reps              Int       @default(0)
+  intervalDays      Int       @default(1) @map("interval_days")
+  lapses            Int       @default(0)
+  totalStudySeconds Int       @default(0) @map("total_study_seconds")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+  @@index([userId, nextReview])
+  @@map("study_logs")
+}

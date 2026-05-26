@@ -24,10 +24,28 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    // Simulate API call — Week 4: replace with real POST /auth/login
-    await new Promise(r => setTimeout(r, 800));
-    setLoading(false);
-    router.push("/");
+    try {
+      const axios = (await import("axios")).default;
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001";
+      const res = await axios.post(`${apiBase}/auth/login`, {
+        email,
+        password,
+      });
+
+      if (res.data.access_token) {
+        localStorage.setItem("access_token", res.data.access_token);
+        localStorage.setItem("username", res.data.user?.name || "User");
+        router.push("/");
+      } else {
+        setError("Invalid server response. Token not found.");
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      const errMsg = err.response?.data?.error || "Invalid credentials or backend offline.";
+      setError(errMsg);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

@@ -105,15 +105,15 @@ export default function Syllabus() {
             <p className="text-xs">Once the backend is connected, subjects and topics will appear here.</p>
           </div>
         ) : (
-          subjects.map(subject => (
+          subjects.map((subject: any) => (
             <SubjectRow
               key={subject.id}
               name={subject.name}
               color={subject.color}
               topicCount={subject.topics.length}
-              masteredCount={subject.topics.filter(t => t.status === "mastered").length}
+              masteredCount={subject.topics.filter((t: any) => t.status === "mastered").length}
             >
-              {subject.topics.map(topic => (
+              {subject.topics.map((topic: any) => (
                 <div key={topic.id} className="flex items-center gap-3 py-2 border-b border-slate-700/30 last:border-0">
                   <BookOpen size={13} className="text-slate-500 shrink-0" />
                   <span className="flex-1 text-sm text-slate-300 truncate">{topic.title}</span>

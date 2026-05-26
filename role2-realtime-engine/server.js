@@ -4,16 +4,27 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const hmssdk = require('@100mslive/server-sdk');
+const { throttle } = require('./utils');
 
 const app = express();
 app.use(cors());
 
 // Initialize 100ms SDK using keys from your .env file
-const sdk = new hmssdk.SDK(process.env.HMS_ACCESS_KEY, process.env.HMS_SECRET_KEY);
+let sdk = null;
+if (process.env.HMS_ACCESS_KEY && process.env.HMS_SECRET_KEY) {
+    try {
+        sdk = new hmssdk.SDK(process.env.HMS_ACCESS_KEY, process.env.HMS_SECRET_KEY);
+        console.log("🔑 100ms SDK initialized successfully.");
+    } catch (e) {
+        console.error("⚠️ Failed to initialize 100ms SDK:", e.message);
+    }
+} else {
+    console.warn("⚠️ 100ms keys not found in .env. Video tokens will be generated using mock values.");
+}
 
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: "http://localhost:3000", methods: ["GET", "POST"] }
+    cors: { origin: process.env.CLIENT_URL || "http://localhost:3000", methods: ["GET", "POST"] }
 });
 
 // State: Store rooms, users, and DRAWING HISTORY
@@ -66,20 +77,47 @@ io.on('connection', (socket) => {
         }
     });
 
-    // --- 3. WEEK 3: VIDEO SIGNALING LOGIC (Corrected) ---
     socket.on('request_video_token', async ({ roomId, role }) => {
         try {
-            // Using getManagementToken for the updated SDK version
-            const token = await sdk.getManagementToken({
-                room_id: roomId, 
-                role: role || 'guest' 
-            });
-
-            socket.emit('video_token_received', { token });
-            console.log(`🔑 Video Token generated for ${socket.id}`);
+            if (sdk) {
+                // Using getManagementToken for the updated SDK version
+                const token = await sdk.getManagementToken({
+                    room_id: roomId, 
+                    role: role || 'guest' 
+                });
+                socket.emit('video_token_received', { token });
+                console.log(`🔑 Video Token generated for ${socket.id}`);
+            } else {
+                const mockToken = `mock-token-${Math.random().toString(36).substring(7)}`;
+                socket.emit('video_token_received', { token: mockToken });
+                console.log(`🔑 Mock Video Token generated for ${socket.id}`);
+            }
         } catch (error) {
             console.error("❌ Video Token Error:", error);
             socket.emit('video_error', { message: "Token generation failed" });
+        }
+    });
+
+    // --- WebRTC signaling bridge for zero-cost, high-performance video calls ---
+    socket.on('webrtc_signal', ({ roomId, targetId, signal }) => {
+        io.to(targetId).emit('webrtc_signal', {
+            senderId: socket.id,
+            signal
+        });
+    });
+
+    socket.on('toggle_timer', (roomId) => {
+        if (rooms[roomId] && rooms[roomId].timer) {
+            rooms[roomId].timer.is_running = !rooms[roomId].timer.is_running;
+            io.to(roomId).emit('room_state_update', rooms[roomId]);
+        }
+    });
+
+    socket.on('reset_timer', (roomId) => {
+        if (rooms[roomId] && rooms[roomId].timer) {
+            rooms[roomId].timer.is_running = false;
+            rooms[roomId].timer.seconds_left = rooms[roomId].timer.type === "pomodoro" ? 1500 : 300;
+            io.to(roomId).emit('room_state_update', rooms[roomId]);
         }
     });
 
@@ -92,6 +130,24 @@ io.on('connection', (socket) => {
         console.log(`🔌 User disconnected: ${socket.id}`);
     });
 });
+
+// Tick timer for rooms
+setInterval(() => {
+    for (const roomId in rooms) {
+        const room = rooms[roomId];
+        if (room.timer && room.timer.is_running) {
+            if (room.timer.seconds_left > 0) {
+                room.timer.seconds_left--;
+            } else {
+                const nextType = room.timer.type === "pomodoro" ? "break" : "pomodoro";
+                room.timer.type = nextType;
+                room.timer.seconds_left = nextType === "pomodoro" ? 1500 : 300;
+                room.timer.is_running = false;
+            }
+            io.to(roomId).emit('room_state_update', room);
+        }
+    }
+}, 1000);
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log(`🚀 ENGINE ACTIVE ON PORT ${PORT}`));

@@ -51,10 +51,10 @@ export default function Analytics() {
   const topics = topicsData?.topics ?? [];
   const subjects = subjectsData?.subjects ?? [];
   const statusCounts = {
-    critical: topics.filter((t) => t.status === "critical").length,
-    due:      topics.filter((t) => t.status === "due").length,
-    learning: topics.filter((t) => t.status === "learning").length,
-    mastered: topics.filter((t) => t.status === "mastered").length,
+    critical: topics.filter((t: any) => t.status === "critical").length,
+    due:      topics.filter((t: any) => t.status === "due").length,
+    learning: topics.filter((t: any) => t.status === "learning").length,
+    mastered: topics.filter((t: any) => t.status === "mastered").length,
   };
   const total = topics.length;
   const loading = topicsLoading || subjectsLoading || statsLoading;
@@ -210,7 +210,7 @@ export default function Analytics() {
             {[
               { label: "Current Streak",  value: `${statsData?.stats.currentStreak ?? 0} days`, colour: "#EAB308" },
               { label: "Mastery Rate",    value: `${total === 0 ? 0 : Math.round((statusCounts.mastered / total) * 100)}%`, colour: "#22C55E" },
-              { label: "Avg Ease Factor", value: `${total === 0 ? "0.00" : (topics.reduce((a, t) => a + t.easeFactor, 0) / total).toFixed(2)}`, colour: "#3B82F6" },
+              { label: "Avg Ease Factor", value: `${total === 0 ? "0.00" : (topics.reduce((a: number, t: any) => a + t.easeFactor, 0) / total).toFixed(2)}`, colour: "#3B82F6" },
             ].map(s => (
               <div key={s.label} className="flex flex-col gap-1 p-4 rounded-xl bg-slate-800/60 border border-slate-700/50">
                 <span className="text-xs text-slate-400">{s.label}</span>
@@ -224,8 +224,8 @@ export default function Analytics() {
       {/* ── Subjects tab ── */}
       {activeTab === "subjects" && (
         <div className="flex flex-col gap-3">
-          {subjects.map(subject => {
-            const mas = subject.topics.filter(t => t.status === "mastered").length;
+          {subjects.map((subject: any) => {
+            const mas = subject.topics.filter((t: any) => t.status === "mastered").length;
             const tot = subject.topics.length;
             const pct = tot > 0 ? Math.round((mas / tot) * 100) : 0;
             return (
@@ -243,14 +243,14 @@ export default function Analytics() {
                   />
                 </div>
                 <div className="flex gap-2 mt-3 flex-wrap">
-                  {subject.topics.map(t => (
+                  {subject.topics.map((t: any) => (
                     <span
                       key={t.id}
                       className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                       style={{
-                        background: STATUS_COLOUR[t.status] + "22",
-                        color:      STATUS_COLOUR[t.status],
-                        border:     `1px solid ${STATUS_COLOUR[t.status]}44`,
+                        background: STATUS_COLOUR[t.status as TopicStatus] + "22",
+                        color:      STATUS_COLOUR[t.status as TopicStatus],
+                        border:     `1px solid ${STATUS_COLOUR[t.status as TopicStatus]}44`,
                       }}
                     >
                       {t.title.length > 20 ? t.title.slice(0, 20) + "…" : t.title}
