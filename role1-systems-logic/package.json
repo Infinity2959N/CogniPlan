@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "ts-node src/week3/server.ts",
     "start": "node dist/src/week3/server.js",
+    "prestart": "npm run build",
     "build": "tsc -p tsconfig.json",
     "test": "jest",
     "test:watch": "jest --watch",
